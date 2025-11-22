@@ -63,7 +63,7 @@ export default function SignInPage() {
           Entre com seu email e senha para acessar o dashboard
         </CardDescription>
       </CardHeader>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} className='space-y-4'>
         <CardContent className='space-y-4'>
           <div className='space-y-2'>
             <Label htmlFor='email'>Email</Label>
