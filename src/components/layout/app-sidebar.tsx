@@ -133,9 +133,11 @@ export default function AppSidebar() {
                                   </Link>
                                 </SidebarMenuSubButton>
                               </TooltipTrigger>
-                              <TooltipContent side='right' align='center'>
-                                <p>{subItem.description || subItem.title}</p>
-                              </TooltipContent>
+                              {subItem.description && (
+                                <TooltipContent side='right' align='center'>
+                                  <p>{subItem.description}</p>
+                                </TooltipContent>
+                              )}
                             </Tooltip>
                           </SidebarMenuSubItem>
                         ))}
