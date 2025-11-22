@@ -1,5 +1,7 @@
 import PageContainer from '@/components/layout/page-container';
 import { KPICard } from '@/components/pages/dashboard/kpi-card';
+import { RecentOrders } from '@/components/pages/dashboard/recent-orders';
+import { SalesChart } from '@/components/pages/dashboard/sales-chart';
 import {
   Card,
   CardContent,
@@ -23,7 +25,7 @@ export default async function Page() {
   });
 
   return (
-    <PageContainer scrollable={false}>
+    <PageContainer scrollable={true}>
       <div className='flex flex-1 flex-col space-y-4'>
         <div className='flex items-start justify-between'>
           <Heading
@@ -40,6 +42,8 @@ export default async function Page() {
             ))}
           </div>
         )}
+        <SalesChart />
+        <RecentOrders />
       </div>
     </PageContainer>
   );

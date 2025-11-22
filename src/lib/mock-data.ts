@@ -22,13 +22,6 @@ export interface Order {
   total: number;
 }
 
-export interface KPI {
-  label: string;
-  value: string;
-  change?: number;
-  type?: 'success' | 'warning' | 'error';
-}
-
 export const mockProducts: Product[] = [
   {
     id: '1',
@@ -145,29 +138,43 @@ export const mockOrders: Order[] = [
   }
 ];
 
+import { DollarSign, Link, PackageX, ShoppingBag } from 'lucide-react';
+
+export interface KPI {
+  label: string;
+  value: string;
+  change?: number;
+  type?: 'success' | 'warning' | 'error';
+  icon?: React.ElementType;
+}
+
 export const mockKPIs: KPI[] = [
   {
     label: 'Faturamento Hoje',
     value: 'R$ 2.847,60',
     change: 12.5,
-    type: 'success'
+    type: 'success',
+    icon: DollarSign
   },
   {
     label: 'Pedidos Pendentes',
     value: '8',
     change: -3.2,
-    type: 'warning'
+    type: 'warning',
+    icon: ShoppingBag
   },
   {
     label: 'Produtos Sem Estoque',
     value: '3',
     change: 1,
-    type: 'error'
+    type: 'error',
+    icon: PackageX
   },
   {
     label: 'Marketplaces Conectados',
     value: '3/4',
-    type: 'success'
+    type: 'success',
+    icon: Link
   }
 ];
 

@@ -1,3 +1,4 @@
+'use client';
 import {
   Card,
   CardContent,
@@ -15,7 +16,6 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { mockOrders } from '@/lib/mock-data';
-import { cn } from '@/lib/utils';
 
 const marketplaceIcons = {
   mercadolivre: '🛒',

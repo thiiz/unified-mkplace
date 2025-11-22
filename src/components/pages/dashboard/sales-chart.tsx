@@ -1,3 +1,4 @@
+'use client';
 import {
   Card,
   CardContent,
@@ -5,17 +6,17 @@ import {
   CardHeader,
   CardTitle
 } from '@/components/ui/card';
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer
-} from 'recharts';
 import { mockSalesData } from '@/lib/mock-data';
+import {
+  CartesianGrid,
+  Legend,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis
+} from 'recharts';
 
 export function SalesChart() {
   return (
