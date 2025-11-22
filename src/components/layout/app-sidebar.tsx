@@ -12,6 +12,7 @@ import {
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
+  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
@@ -19,6 +20,11 @@ import {
   SidebarMenuSubItem,
   SidebarRail
 } from '@/components/ui/sidebar';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger
+} from '@/components/ui/tooltip';
 import { navItems } from '@/constants/data';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import { authClient } from '@/lib/auth-client';
@@ -51,32 +57,84 @@ export default function AppSidebar() {
                 <Collapsible
                   key={item.title}
                   asChild
-                  defaultOpen={item.isActive}
+                  defaultOpen={item.items?.some(
+                    (subItem) => subItem.url === pathname
+                  )}
                   className='group/collapsible'
                 >
                   <SidebarMenuItem>
-                    <CollapsibleTrigger asChild>
-                      <SidebarMenuButton
-                        tooltip={item.title}
-                        isActive={pathname === item.url}
-                      >
-                        {item.icon && <Icon />}
-                        <span>{item.title}</span>
-                        <IconChevronRight className='ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90' />
-                      </SidebarMenuButton>
-                    </CollapsibleTrigger>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <CollapsibleTrigger asChild>
+                          <SidebarMenuButton
+                            isActive={pathname === item.url}
+                            disabled={item.disabled}
+                            aria-disabled={item.disabled}
+                            onClick={(e) => item.disabled && e.preventDefault()}
+                            className={
+                              item.disabled
+                                ? '!pointer-events-auto opacity-50'
+                                : ''
+                            }
+                          >
+                            {item.icon && <Icon />}
+                            <span>{item.title}</span>
+                            <IconChevronRight className='ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90' />
+                          </SidebarMenuButton>
+                        </CollapsibleTrigger>
+                      </TooltipTrigger>
+                      <TooltipContent side='right' align='center'>
+                        <p>{item.description || item.title}</p>
+                      </TooltipContent>
+                    </Tooltip>
                     <CollapsibleContent>
                       <SidebarMenuSub>
                         {item.items?.map((subItem) => (
                           <SidebarMenuSubItem key={subItem.title}>
-                            <SidebarMenuSubButton
-                              asChild
-                              isActive={pathname === subItem.url}
-                            >
-                              <Link href={subItem.url}>
-                                <span>{subItem.title}</span>
-                              </Link>
-                            </SidebarMenuSubButton>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <SidebarMenuSubButton
+                                  asChild
+                                  isActive={pathname === subItem.url}
+                                  aria-disabled={subItem.disabled}
+                                  className={
+                                    subItem.disabled
+                                      ? '!pointer-events-auto opacity-50'
+                                      : ''
+                                  }
+                                >
+                                  <Link
+                                    href={subItem.url}
+                                    target={
+                                      subItem.external ? '_blank' : undefined
+                                    }
+                                    rel={
+                                      subItem.external
+                                        ? 'noopener noreferrer'
+                                        : undefined
+                                    }
+                                    onClick={(e) =>
+                                      subItem.disabled && e.preventDefault()
+                                    }
+                                    className={
+                                      subItem.disabled
+                                        ? 'pointer-events-none'
+                                        : ''
+                                    }
+                                  >
+                                    <span>{subItem.title}</span>
+                                    {subItem.label && (
+                                      <span className='ml-auto text-xs'>
+                                        {subItem.label}
+                                      </span>
+                                    )}
+                                  </Link>
+                                </SidebarMenuSubButton>
+                              </TooltipTrigger>
+                              <TooltipContent side='right' align='center'>
+                                <p>{subItem.description || subItem.title}</p>
+                              </TooltipContent>
+                            </Tooltip>
                           </SidebarMenuSubItem>
                         ))}
                       </SidebarMenuSub>
@@ -85,16 +143,38 @@ export default function AppSidebar() {
                 </Collapsible>
               ) : (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton
-                    asChild
-                    tooltip={item.title}
-                    isActive={pathname === item.url}
-                  >
-                    <Link href={item.url}>
-                      <Icon />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={pathname === item.url}
+                        disabled={item.disabled}
+                        aria-disabled={item.disabled}
+                        className={
+                          item.disabled ? '!pointer-events-auto opacity-50' : ''
+                        }
+                      >
+                        <Link
+                          href={item.url}
+                          target={item.external ? '_blank' : undefined}
+                          rel={
+                            item.external ? 'noopener noreferrer' : undefined
+                          }
+                          onClick={(e) => item.disabled && e.preventDefault()}
+                          className={item.disabled ? 'pointer-events-none' : ''}
+                        >
+                          <Icon />
+                          <span>{item.title}</span>
+                          {item.label && (
+                            <SidebarMenuBadge>{item.label}</SidebarMenuBadge>
+                          )}
+                        </Link>
+                      </SidebarMenuButton>
+                    </TooltipTrigger>
+                    <TooltipContent side='right' align='center'>
+                      <p>{item.description || item.title}</p>
+                    </TooltipContent>
+                  </Tooltip>
                 </SidebarMenuItem>
               );
             })}

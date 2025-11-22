@@ -9,7 +9,6 @@ export interface NavItem {
   icon?: keyof typeof Icons;
   label?: string;
   description?: string;
-  isActive?: boolean;
   items?: NavItem[];
 }
 
