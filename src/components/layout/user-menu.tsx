@@ -13,6 +13,7 @@ import {
 import type { User } from '@/lib/auth';
 import { signOut } from '@/lib/auth-client';
 import { IconLogout, IconUser } from '@tabler/icons-react';
+import { ChevronsUpDown } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 interface UserMenuProps {
@@ -41,10 +42,22 @@ export function UserMenu({ user }: UserMenuProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant='ghost' className='relative h-8 w-8 rounded-full'>
+        <Button
+          variant='ghost'
+          className='relative h-auto w-full justify-start gap-2 p-2'
+        >
           <Avatar className='h-8 w-8'>
             <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
           </Avatar>
+          <div className='flex flex-1 flex-col items-start overflow-hidden'>
+            <span className='w-full truncate text-left text-sm font-medium'>
+              {user.name}
+            </span>
+            <span className='text-muted-foreground w-full truncate text-left text-xs'>
+              {user.email}
+            </span>
+          </div>
+          <ChevronsUpDown className='ml-auto' />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className='w-56' align='end' forceMount>
@@ -59,7 +72,7 @@ export function UserMenu({ user }: UserMenuProps) {
         <DropdownMenuSeparator />
         <DropdownMenuItem disabled>
           <IconUser className='mr-2 h-4 w-4' />
-          <span>Perfil</span>
+          <span>Conta</span>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout}>

@@ -46,7 +46,7 @@ export default function SignInPage() {
       router.push(callbackUrl);
       router.refresh();
     } catch (error: any) {
-      console.error('Login error:', error);
+      // console.error('Login error:', error);
       toast.error(
         error?.message || 'Email ou senha incorretos. Tente novamente.'
       );

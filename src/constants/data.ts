@@ -7,22 +7,23 @@ export const navItems: NavItem[] = [
     icon: 'dashboard',
     isActive: false,
     shortcut: ['d', 'd'],
-    items: [] // Empty array as there are no child items for Dashboard
+    items: [
+      {
+        title: 'Overview',
+        url: '/dashboard/overview',
+        icon: 'dashboard',
+        isActive: false,
+        shortcut: ['d', 'd']
+      }
+    ] // Empty array as there are no child items for Dashboard
   },
   {
-    title: 'Secondary Page',
-    url: '/dashboard/secondary',
-    icon: 'kanban',
+    title: 'Pedidos',
+    url: '/dashboard/orders', // Placeholder as there is no direct link for the parent
+    icon: 'order',
+    isActive: true,
     shortcut: ['p', 'p'],
-    isActive: false,
     items: [] // No child items
-  },
-  {
-    title: 'Account',
-    url: '#', // Placeholder as there is no direct link for the parent
-    icon: 'billing',
-    isActive: true
-
     // items: [
     //   {
     //     title: 'Profile',

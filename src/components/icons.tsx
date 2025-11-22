@@ -15,7 +15,6 @@ import {
   IconLoader2,
   IconLogin,
   IconProps,
-  IconShoppingBag,
   IconMoon,
   IconDotsVertical,
   IconPizza,
@@ -30,8 +29,10 @@ import {
   IconUserX,
   IconX,
   IconLayoutKanban,
-  IconBrandGithub
+  IconBrandGithub,
+  IconBox
 } from '@tabler/icons-react';
+import { ShoppingBag } from 'lucide-react';
 
 export type Icon = React.ComponentType<IconProps>;
 
@@ -40,7 +41,8 @@ export const Icons = {
   logo: IconCommand,
   login: IconLogin,
   close: IconX,
-  product: IconShoppingBag,
+  order: ShoppingBag,
+  product: IconBox,
   spinner: IconLoader2,
   kanban: IconLayoutKanban,
   chevronLeft: IconChevronLeft,
