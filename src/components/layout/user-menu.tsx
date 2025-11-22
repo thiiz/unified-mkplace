@@ -70,7 +70,7 @@ export function UserMenu({ user }: UserMenuProps) {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem disabled>
+        <DropdownMenuItem onClick={() => router.push('/dashboard/account')}>
           <IconUser className='mr-2 h-4 w-4' />
           <span>Conta</span>
         </DropdownMenuItem>
