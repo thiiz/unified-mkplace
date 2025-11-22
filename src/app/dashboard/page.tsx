@@ -1,4 +1,5 @@
 import PageContainer from '@/components/layout/page-container';
+import { KPICard } from '@/components/pages/dashboard/kpi-card';
 import {
   Card,
   CardContent,
@@ -9,6 +10,7 @@ import {
 import { Heading } from '@/components/ui/heading';
 import { Separator } from '@/components/ui/separator';
 import { auth } from '@/lib/auth';
+import { mockKPIs } from '@/lib/mock-data';
 import { headers } from 'next/headers';
 
 export const metadata = {
@@ -32,32 +34,11 @@ export default async function Page() {
         <Separator />
 
         {session?.user && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Informações do Usuário</CardTitle>
-              <CardDescription>Sessão autenticada com sucesso</CardDescription>
-            </CardHeader>
-            <CardContent className='space-y-2'>
-              <div>
-                <span className='font-medium'>Nome:</span>{' '}
-                <span className='text-muted-foreground'>
-                  {session.user.name || 'N/A'}
-                </span>
-              </div>
-              <div>
-                <span className='font-medium'>Email:</span>{' '}
-                <span className='text-muted-foreground'>
-                  {session.user.email}
-                </span>
-              </div>
-              <div>
-                <span className='font-medium'>ID:</span>{' '}
-                <span className='text-muted-foreground font-mono text-sm'>
-                  {session.user.id}
-                </span>
-              </div>
-            </CardContent>
-          </Card>
+          <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-4'>
+            {mockKPIs.map((kpi) => (
+              <KPICard key={kpi.label} {...kpi} />
+            ))}
+          </div>
         )}
       </div>
     </PageContainer>
