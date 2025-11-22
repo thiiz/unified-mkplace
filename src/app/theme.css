@@ -5,6 +5,19 @@ body {
 :root {
   --font-sans: var(--font-inter);
   --header-height: calc(var(--spacing) * 12 + 1px);
+  /* Chart colors - Light mode */
+  --chart-1: 45 93% 47%; /* Mercado Livre - Yellow */
+  --chart-2: 25 95% 53%; /* Shopee - Orange */
+  --chart-3: 221 83% 53%; /* Amazon - Blue */
+  --chart-4: 271 91% 65%; /* Magalu - Purple */
+
+  @variant dark {
+    /* Chart colors - Dark mode */
+    --chart-1: 48 96% 53%; /* Mercado Livre - Brighter Yellow */
+    --chart-2: 31 97% 72%; /* Shopee - Brighter Orange */
+    --chart-3: 217 91% 60%; /* Amazon - Brighter Blue */
+    --chart-4: 271 91% 70%; /* Magalu - Brighter Purple */
+  }
 }
 
 .theme-scaled {
