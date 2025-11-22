@@ -83,9 +83,11 @@ export default function AppSidebar() {
                           </SidebarMenuButton>
                         </CollapsibleTrigger>
                       </TooltipTrigger>
-                      <TooltipContent side='right' align='center'>
-                        <p>{item.description || item.title}</p>
-                      </TooltipContent>
+                      {item.description && (
+                        <TooltipContent side='right' align='center'>
+                          <p>{item.description}</p>
+                        </TooltipContent>
+                      )}
                     </Tooltip>
                     <CollapsibleContent>
                       <SidebarMenuSub>
@@ -171,9 +173,11 @@ export default function AppSidebar() {
                         </Link>
                       </SidebarMenuButton>
                     </TooltipTrigger>
-                    <TooltipContent side='right' align='center'>
-                      <p>{item.description || item.title}</p>
-                    </TooltipContent>
+                    {item.description && (
+                      <TooltipContent side='right' align='center'>
+                        <p>{item.description}</p>
+                      </TooltipContent>
+                    )}
                   </Tooltip>
                 </SidebarMenuItem>
               );
