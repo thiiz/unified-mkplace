@@ -10,8 +10,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
+import { useSidebar } from '@/components/ui/sidebar';
 import type { User } from '@/lib/auth';
 import { signOut } from '@/lib/auth-client';
+import { cn } from '@/lib/utils';
 import { IconLogout, IconUser } from '@tabler/icons-react';
 import { ChevronsUpDown } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -22,6 +24,7 @@ interface UserMenuProps {
 
 export function UserMenu({ user }: UserMenuProps) {
   const router = useRouter();
+  const { state } = useSidebar();
 
   const handleLogout = async () => {
     await signOut();
@@ -39,25 +42,34 @@ export function UserMenu({ user }: UserMenuProps) {
       .slice(0, 2);
   };
 
+  const isCollapsed = state === 'collapsed';
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
           variant='ghost'
-          className='relative h-auto w-full justify-start gap-2 p-2'
+          className={cn(
+            'relative h-auto w-full gap-2 p-2',
+            isCollapsed ? 'justify-center' : 'justify-start'
+          )}
         >
           <Avatar className='h-8 w-8'>
             <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
           </Avatar>
-          <div className='flex flex-1 flex-col items-start overflow-hidden'>
-            <span className='w-full truncate text-left text-sm font-medium'>
-              {user.name}
-            </span>
-            <span className='text-muted-foreground w-full truncate text-left text-xs'>
-              {user.email}
-            </span>
-          </div>
-          <ChevronsUpDown className='ml-auto' />
+          {!isCollapsed && (
+            <>
+              <div className='flex flex-1 flex-col items-start overflow-hidden'>
+                <span className='w-full truncate text-left text-sm font-medium'>
+                  {user.name}
+                </span>
+                <span className='text-muted-foreground w-full truncate text-left text-xs'>
+                  {user.email}
+                </span>
+              </div>
+              <ChevronsUpDown className='ml-auto' />
+            </>
+          )}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className='w-56' align='end' forceMount>
