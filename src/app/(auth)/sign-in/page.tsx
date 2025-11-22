@@ -32,11 +32,15 @@ export default function SignInPage() {
     setIsLoading(true);
 
     try {
-      await signIn.email({
+      const { error } = await signIn.email({
         email,
         password,
         callbackURL: callbackUrl
       });
+
+      if (error) {
+        throw error;
+      }
 
       toast.success('Login realizado com sucesso!');
       router.push(callbackUrl);

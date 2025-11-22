@@ -44,12 +44,16 @@ export default function SignUpPage() {
     setIsLoading(true);
 
     try {
-      await signUp.email({
+      const { error } = await signUp.email({
         email,
         password,
         name,
         callbackURL: '/'
       });
+
+      if (error) {
+        throw error;
+      }
 
       toast.success('Conta criada com sucesso!');
       router.push('/');
