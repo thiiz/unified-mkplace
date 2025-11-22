@@ -23,6 +23,7 @@
     ]
   },
   "dependencies": {
+    "@prisma/adapter-pg": "^7.0.0",
     "@radix-ui/react-accordion": "^1.2.3",
     "@radix-ui/react-alert-dialog": "^1.1.6",
     "@radix-ui/react-aspect-ratio": "^1.1.2",
@@ -53,9 +54,11 @@
     "@radix-ui/react-tooltip": "^1.1.8",
     "@tabler/icons-react": "^3.31.0",
     "@tailwindcss/postcss": "^4.0.0",
+    "better-auth": "^1.3.34",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
+    "dotenv": "^17.2.3",
     "eslint": "8.48.0",
     "eslint-config-next": "15.1.0",
     "input-otp": "^1.4.2",
@@ -66,6 +69,7 @@
     "next-themes": "^0.4.6",
     "nextjs-toploader": "^3.7.15",
     "nuqs": "^2.4.1",
+    "pg": "^8.16.3",
     "postcss": "8.4.49",
     "react": "19.0.0",
     "react-day-picker": "^8.10.1",
@@ -81,7 +85,9 @@
     "vaul": "^1.1.2"
   },
   "devDependencies": {
+    "@prisma/client": "^7.0.0",
     "@types/node": "22.10.2",
+    "@types/pg": "^8.15.6",
     "@types/react": "19.0.1",
     "@types/react-dom": "19.0.2",
     "@typescript-eslint/eslint-plugin": "^6.11.0",
@@ -89,6 +95,7 @@
     "lint-staged": "^15.2.11",
     "prettier": "3.4.2",
     "prettier-plugin-tailwindcss": "^0.6.11",
+    "prisma": "^7.0.0",
     "tw-animate-css": "^1.2.4"
   },
   "overrides": {
