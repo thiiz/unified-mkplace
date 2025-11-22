@@ -101,7 +101,7 @@ export function ProfileForm() {
             </FormItem>
           )}
         />
-        <Button type='submit' disabled={isLoading}>
+        <Button type='submit' disabled={isLoading || !form.formState.isDirty}>
           {isLoading ? 'Updating...' : 'Update profile'}
         </Button>
       </form>

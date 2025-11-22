@@ -41,21 +41,15 @@ export function SecurityForm() {
 
     setIsLoading(true);
     try {
-      const { error } = await authClient.changePassword({
+      await authClient.changePassword({
         newPassword: data.newPassword,
         currentPassword: data.currentPassword,
         revokeOtherSessions: true
       });
-
-      if (error) {
-        toast.error(error.message || 'Failed to update password');
-        return;
-      }
-
       toast.success('Password updated successfully');
       form.reset();
     } catch (error) {
-      toast.error('An unexpected error occurred');
+      toast.error('Failed to update password');
     } finally {
       setIsLoading(false);
     }
@@ -123,7 +117,7 @@ export function SecurityForm() {
             </FormItem>
           )}
         />
-        <Button type='submit' disabled={isLoading}>
+        <Button type='submit' disabled={isLoading || !form.formState.isDirty}>
           {isLoading ? 'Updating...' : 'Update password'}
         </Button>
       </form>
