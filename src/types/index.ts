@@ -9,7 +9,7 @@ export interface NavItem {
   icon?: keyof typeof Icons;
   label?: string;
   description?: string;
-  items?: NavItem[];
+  items?: Omit<NavItem, 'icon'>[];
 }
 
 export interface NavItemWithChildren extends NavItem {
