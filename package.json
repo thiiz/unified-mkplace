@@ -91,6 +91,7 @@
     "@types/react": "19.0.1",
     "@types/react-dom": "19.0.2",
     "@typescript-eslint/eslint-plugin": "^6.11.0",
+    "cloudflared": "^0.7.1",
     "husky": "^9.1.7",
     "lint-staged": "^15.2.11",
     "prettier": "3.4.2",
