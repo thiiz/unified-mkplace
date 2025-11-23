@@ -15,7 +15,8 @@
     "lint:strict": "eslint --max-warnings=0 src",
     "format": "prettier --write .",
     "format:check": "prettier -c -w .",
-    "prepare": "husky"
+    "prepare": "husky",
+    "postinstall": "prisma generate"
   },
   "lint-staged": {
     "**/*.{js,jsx,tsx,ts,css,less,scss,sass}": [
@@ -24,6 +25,7 @@
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.0.0",
+    "@prisma/client": "^7.0.0",
     "@radix-ui/react-accordion": "^1.2.3",
     "@radix-ui/react-alert-dialog": "^1.1.6",
     "@radix-ui/react-aspect-ratio": "^1.1.2",
@@ -85,7 +87,6 @@
     "vaul": "^1.1.2"
   },
   "devDependencies": {
-    "@prisma/client": "^7.0.0",
     "@types/node": "22.10.2",
     "@types/pg": "^8.15.6",
     "@types/react": "19.0.1",
