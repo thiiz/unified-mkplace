@@ -251,9 +251,7 @@ export function createShopeeClient(): ShopeeClient {
     partnerId: process.env.SHOPEE_PARTNER_ID || '',
     partnerKey: process.env.SHOPEE_PARTNER_KEY || '',
     redirectUri: process.env.SHOPEE_REDIRECT_URI || '',
-    apiUrl:
-      process.env.SHOPEE_API_URL ||
-      'https://partner.test-stable.shopeemobile.com'
+    apiUrl: process.env.SHOPEE_API_URL || 'https://partner.shopeemobile.com'
   };
 
   // Validate configuration
