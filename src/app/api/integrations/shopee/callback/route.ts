@@ -1,4 +1,6 @@
+import { auth } from '@/lib/auth';
 import { createShopeeClient } from '@/services/shopee/client';
+import { headers } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 
 /**
@@ -7,6 +9,15 @@ import { NextRequest, NextResponse } from 'next/server';
  */
 export async function GET(request: NextRequest) {
   try {
+    // Get authenticated user session
+    const session = await auth.api.getSession({
+      headers: await headers()
+    });
+
+    if (!session?.user) {
+      throw new Error('User not authenticated');
+    }
+
     const { searchParams } = request.nextUrl;
 
     // Get authorization code and shop_id from callback
@@ -33,31 +44,23 @@ export async function GET(request: NextRequest) {
     // Create Shopee client instance
     const client = createShopeeClient();
 
-    // Exchange code for access token
-    const tokenResponse = await client.getAccessToken(code, shopId);
+    // Exchange code for access token and save to database linked to user
+    const tokenResponse = await client.getAccessToken(
+      code,
+      shopId,
+      session.user.id
+    );
 
-    // TODO: Store tokens in database or session
-    // For now, we'll store in localStorage via client-side redirect
-    console.log('Shopee tokens received:', {
+    console.log('Shopee tokens saved for shop:', {
       shop_id: shopId,
-      access_token: tokenResponse.access_token.substring(0, 10) + '...',
-      expires_in: tokenResponse.expire_in
+      user_id: session.user.id
     });
 
-    // Redirect back to marketplace page with success and token data
+    // Redirect back to marketplace page with success
     const baseUrl = request.nextUrl.origin;
     const successUrl = new URL('/dashboard/marketplace/shopee', baseUrl);
     successUrl.searchParams.set('success', 'true');
     successUrl.searchParams.set('shop_id', shopId.toString());
-
-    // IMPORTANT: In production, DO NOT pass tokens via URL
-    // This is temporary for demonstration. Implement proper server-side session storage.
-    successUrl.searchParams.set('access_token', tokenResponse.access_token);
-    successUrl.searchParams.set('refresh_token', tokenResponse.refresh_token);
-    successUrl.searchParams.set(
-      'expire_in',
-      tokenResponse.expire_in.toString()
-    );
 
     return NextResponse.redirect(successUrl);
   } catch (error) {
