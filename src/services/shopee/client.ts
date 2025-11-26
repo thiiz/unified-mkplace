@@ -54,6 +54,7 @@ class MemoryTokenStorage implements TokenStorage {
 export class ShopeeClient {
   private sdk: ShopeeSDK;
   private config: ShopeeConfig;
+  private tokenStorage: MemoryTokenStorage;
 
   constructor(config: ShopeeConfig) {
     this.config = config;
@@ -69,14 +70,69 @@ export class ShopeeClient {
 
     // Use MemoryTokenStorage to prevent file system writes in serverless environments
     // The actual persistence will be handled explicitly in getAccessToken using Prisma
+    this.tokenStorage = new MemoryTokenStorage();
     this.sdk = new ShopeeSDK(
       {
         partner_id: parseInt(config.partnerId),
         partner_key: config.partnerKey,
         base_url: baseUrl
       },
-      new MemoryTokenStorage()
+      this.tokenStorage
     );
+  }
+
+  /**
+   * Get authenticated SDK instance for a specific shop
+   */
+  async getSdkForShop(shopId: string): Promise<ShopeeSDK> {
+    const shop = await prisma.shopeeShop.findUnique({
+      where: { shopId }
+    });
+
+    if (!shop) {
+      throw new Error(`Shop ${shopId} not found`);
+    }
+
+    // Check if token is expired or about to expire (e.g. within 5 minutes)
+    const now = new Date();
+    const fiveMinutesFromNow = new Date(now.getTime() + 5 * 60 * 1000);
+
+    if (shop.expireAt < fiveMinutesFromNow) {
+      console.log(
+        `[Shopee] Token for shop ${shopId} expired or expiring soon, refreshing...`
+      );
+      try {
+        const refreshed = await this.refreshAccessToken(
+          shop.refreshToken,
+          parseInt(shopId)
+        );
+        // refreshAccessToken already updates the DB
+
+        // Update local variable to use the new token
+        shop.accessToken = refreshed.access_token;
+        shop.refreshToken = refreshed.refresh_token;
+        shop.expiresIn = refreshed.expire_in;
+      } catch (error) {
+        console.error(
+          `[Shopee] Failed to refresh token for shop ${shopId}:`,
+          error
+        );
+        throw new Error(`Failed to refresh token for shop ${shopId}`);
+      }
+    }
+
+    // Load token into memory storage
+    await this.tokenStorage.store({
+      access_token: shop.accessToken,
+      refresh_token: shop.refreshToken,
+      expire_in: shop.expiresIn,
+      shop_id: parseInt(shop.shopId),
+      request_id: '', // Not needed for storage
+      error: '',
+      message: ''
+    });
+
+    return this.sdk;
   }
 
   /**
