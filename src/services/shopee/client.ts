@@ -54,29 +54,40 @@ export class ShopeeClient {
   }
 
   /**
-   * Generate authorization URL for OAuth flow
+   * Generate authorization URL for shop authorization
+   * According to Shopee documentation: partner.shopeemobile.com/api/v2/shop/auth_partner
+   * URL format: host + path + partner_id + timestamp + redirect + sign
+   * Sign = HMAC-SHA256(partner_id + path + timestamp, partner_key)
+   *
    * @param redirectUri - Optional override for redirect URI
-   * @returns Complete authorization URL
+   * @returns Complete authorization URL (valid for 5 minutes)
    */
   generateAuthUrl(redirectUri?: string): string {
     const { partnerId, apiUrl } = this.config;
     const redirect = redirectUri || this.config.redirectUri;
 
-    // Generate timestamp (current time in seconds)
+    // Generate timestamp (valid for 5 minutes)
     const timestamp = Math.floor(Date.now() / 1000);
 
-    // API path for authorization
+    // Path for shop authorization
     const path = '/api/v2/shop/auth_partner';
 
-    // Generate signature
+    // Generate signature: HMAC-SHA256(partner_id + path + timestamp)
     const sign = this.generateSignature(path, timestamp);
 
     // Build authorization URL
+    // Host is the same as API URL (partner.test-stable.shopeemobile.com or partner.shopeemobile.com)
     const authUrl = new URL(`${apiUrl}${path}`);
     authUrl.searchParams.set('partner_id', partnerId);
     authUrl.searchParams.set('timestamp', timestamp.toString());
-    authUrl.searchParams.set('sign', sign);
     authUrl.searchParams.set('redirect', redirect);
+    authUrl.searchParams.set('sign', sign);
+
+    console.log('[Shopee] Generated auth URL:', authUrl.toString());
+    console.log(
+      '[Shopee] URL expires in 5 minutes at:',
+      new Date((timestamp + 300) * 1000).toISOString()
+    );
 
     return authUrl.toString();
   }
@@ -91,7 +102,7 @@ export class ShopeeClient {
     code: string,
     shopId: number
   ): Promise<ShopeeTokenResponse> {
-    const { partnerId, partnerKey, apiUrl } = this.config;
+    const { partnerId, apiUrl } = this.config;
 
     // Generate timestamp
     const timestamp = Math.floor(Date.now() / 1000);
