@@ -72,53 +72,32 @@ export default function MarketplacePage({
     shopId?: string;
     connectedAt?: string;
   }>({});
+  const [isLoadingStatus, setIsLoadingStatus] = useState(true);
   const searchParams = useSearchParams();
 
-  // Handle OAuth callback
+  // Handle OAuth callback and check connection status
   useEffect(() => {
-    if (slug !== 'shopee') return;
+    if (slug !== 'shopee') {
+      setIsLoadingStatus(false);
+      return;
+    }
 
-    // Check for success callback
+    // Check for success callback (immediate after OAuth)
     const success = searchParams.get('success');
     const shopId = searchParams.get('shop_id');
-    const accessToken = searchParams.get('access_token');
-    const refreshToken = searchParams.get('refresh_token');
-    const expireIn = searchParams.get('expire_in');
 
-    if (success === 'true' && shopId && accessToken && refreshToken) {
-      // Store tokens (localStorage for demo - use secure storage in production)
-      const tokenData = {
-        shopId,
-        accessToken,
-        refreshToken,
-        expireIn: parseInt(expireIn || '0'),
-        connectedAt: new Date().toISOString()
-      };
-
-      localStorage.setItem('shopee_auth', JSON.stringify(tokenData));
+    if (success === 'true' && shopId) {
+      // OAuth just completed successfully
       setShopeeConnected(true);
       setShopeeData({
         shopId,
-        connectedAt: tokenData.connectedAt
+        connectedAt: new Date().toISOString()
       });
+      setIsLoadingStatus(false);
 
       // Clean up URL
       window.history.replaceState({}, '', '/dashboard/marketplace/shopee');
-    }
-
-    // Check for existing connection
-    const stored = localStorage.getItem('shopee_auth');
-    if (stored) {
-      try {
-        const data = JSON.parse(stored);
-        setShopeeConnected(true);
-        setShopeeData({
-          shopId: data.shopId,
-          connectedAt: data.connectedAt
-        });
-      } catch (e) {
-        console.error('Failed to parse stored auth data:', e);
-      }
+      return;
     }
 
     // Check for errors
@@ -126,9 +105,39 @@ export default function MarketplacePage({
     const message = searchParams.get('message');
     if (error) {
       console.error('OAuth error:', error, message);
+      setIsLoadingStatus(false);
       // Clean up URL
       window.history.replaceState({}, '', '/dashboard/marketplace/shopee');
+      return;
     }
+
+    // Fetch connection status from API
+    const checkConnectionStatus = async () => {
+      try {
+        const response = await fetch('/api/integrations/shopee/status');
+        const data = await response.json();
+
+        if (data.connected) {
+          setShopeeConnected(true);
+          setShopeeData({
+            shopId: data.shopId,
+            connectedAt: data.connectedAt
+          });
+        } else {
+          setShopeeConnected(false);
+          setShopeeData({});
+        }
+      } catch (error) {
+        console.error('Failed to fetch Shopee status:', error);
+        // On error, default to not connected
+        setShopeeConnected(false);
+        setShopeeData({});
+      } finally {
+        setIsLoadingStatus(false);
+      }
+    };
+
+    checkConnectionStatus();
   }, [slug, searchParams]);
 
   // Handle connect button
@@ -137,10 +146,22 @@ export default function MarketplacePage({
   };
 
   // Handle disconnect button
-  const handleDisconnect = () => {
-    localStorage.removeItem('shopee_auth');
-    setShopeeConnected(false);
-    setShopeeData({});
+  const handleDisconnect = async () => {
+    try {
+      // Call API to remove from database
+      await fetch('/api/integrations/shopee/disconnect', {
+        method: 'POST'
+      });
+
+      // Update local state
+      setShopeeConnected(false);
+      setShopeeData({});
+    } catch (error) {
+      console.error('Failed to disconnect:', error);
+      // Still update UI even if API call fails
+      setShopeeConnected(false);
+      setShopeeData({});
+    }
   };
 
   if (!slug || !Object.keys(MARKETPLACES).includes(slug)) {
@@ -248,7 +269,13 @@ export default function MarketplacePage({
                 <CardDescription>{marketplace.description}</CardDescription>
               </CardHeader>
               <CardContent>
-                {!isConnected ? (
+                {isShopee && isLoadingStatus ? (
+                  <div className='flex flex-col items-center justify-center space-y-4 py-6'>
+                    <p className='text-muted-foreground'>
+                      Checking connection status...
+                    </p>
+                  </div>
+                ) : !isConnected ? (
                   <div className='flex flex-col items-center justify-center space-y-4 py-6'>
                     <p className='text-muted-foreground'>
                       This marketplace is not connected.
