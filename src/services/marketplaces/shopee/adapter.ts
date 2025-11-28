@@ -220,11 +220,11 @@ export class ShopeeAdapter implements MarketplaceAdapter<ShopeeExportOptions> {
 
         console.log('[Shopee] Upload response:', uploadRes);
 
-        if (uploadRes.image_info?.image_id) {
-          imageIds.push(uploadRes.image_info.image_id);
+        if (uploadRes.response?.image_info?.image_id) {
+          imageIds.push(uploadRes.response.image_info.image_id);
           console.log(
             '[Shopee] Image uploaded successfully. ID:',
-            uploadRes.image_info.image_id
+            uploadRes.response.image_info.image_id
           );
         } else {
           console.error(

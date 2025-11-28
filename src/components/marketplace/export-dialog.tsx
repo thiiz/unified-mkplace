@@ -1,7 +1,9 @@
 'use client';
 
 import { exportProductToMarketplace } from '@/actions/marketplace-export';
+import { getConnectedShopeeShop, getShopeeLogistics } from '@/actions/shopee';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -11,11 +13,13 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { MarketplaceType } from '@/services/marketplaces/types';
 import { Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { CategorySelector } from './shopee/category-selector';
 
 type Product = {
   id: string;
@@ -63,6 +67,9 @@ export function ExportDialog({
 
   // Marketplace-specific fields
   const [categoryId, setCategoryId] = useState('');
+  const [logisticsChannels, setLogisticsChannels] = useState<any[]>([]);
+  const [selectedLogistics, setSelectedLogistics] = useState<number[]>([]);
+  const [isFetchingLogistics, setIsFetchingLogistics] = useState(false);
 
   // Initialize form with product data when dialog opens
   useEffect(() => {
@@ -78,7 +85,32 @@ export function ExportDialog({
       setHeight(product.height ? String(product.height) : '');
       setLength(product.length ? String(product.length) : '');
     }
-  }, [open, product]);
+
+    // Fetch logistics if marketplace is Shopee
+    if (open && marketplace === 'shopee') {
+      const fetchLogistics = async () => {
+        setIsFetchingLogistics(true);
+        try {
+          const shop = await getConnectedShopeeShop();
+          if (shop) {
+            const channels = await getShopeeLogistics(shop.shopId);
+            setLogisticsChannels(channels);
+            // Pre-select enabled channels
+            const enabled = channels
+              .filter((c: any) => c.enabled)
+              .map((c: any) => c.logistics_channel_id);
+            setSelectedLogistics(enabled);
+          }
+        } catch (error) {
+          console.error('Failed to fetch logistics:', error);
+          toast.error('Failed to load logistics channels');
+        } finally {
+          setIsFetchingLogistics(false);
+        }
+      };
+      fetchLogistics();
+    }
+  }, [open, product, marketplace]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,12 +125,16 @@ export function ExportDialog({
           ? {
               categoryId: parseInt(categoryId),
               attributes: [],
-              logistics: [
-                {
-                  logistic_id: 1,
-                  enabled: true
-                }
-              ]
+              logistics: logisticsChannels
+                .filter((l) =>
+                  selectedLogistics.includes(l.logistics_channel_id)
+                )
+                .map((l) => ({
+                  logistic_id: l.logistics_channel_id,
+                  enabled: true,
+                  logistic_name: l.logistics_channel_name,
+                  is_free: false // Default to false, user can't configure this yet
+                }))
             }
           : {};
 
@@ -276,18 +312,68 @@ export function ExportDialog({
 
               <div className='space-y-2'>
                 <Label htmlFor='categoryId'>
-                  Category ID <span className='text-destructive'>*</span>
+                  Category <span className='text-destructive'>*</span>
                 </Label>
-                <Input
-                  id='categoryId'
-                  type='number'
-                  value={categoryId}
-                  onChange={(e) => setCategoryId(e.target.value)}
-                  placeholder='e.g., 100017'
-                  required
+                <CategorySelector
+                  value={categoryId ? parseInt(categoryId) : undefined}
+                  onChange={(val) => setCategoryId(val.toString())}
                 />
                 <p className='text-muted-foreground text-xs'>
-                  Enter the Shopee category ID for this product
+                  Select the Shopee category for this product
+                </p>
+              </div>
+
+              <div className='space-y-2'>
+                <Label>Logistics Channels</Label>
+                <ScrollArea className='h-[150px] w-full rounded-md border p-4'>
+                  {isFetchingLogistics ? (
+                    <div className='flex items-center justify-center py-4'>
+                      <Loader2 className='h-4 w-4 animate-spin' />
+                    </div>
+                  ) : logisticsChannels.length === 0 ? (
+                    <p className='text-muted-foreground text-sm'>
+                      No logistics channels found.
+                    </p>
+                  ) : (
+                    <div className='space-y-2'>
+                      {logisticsChannels.map((channel) => (
+                        <div
+                          key={channel.logistics_channel_id}
+                          className='flex items-center space-x-2'
+                        >
+                          <Checkbox
+                            id={`logistic-${channel.logistics_channel_id}`}
+                            checked={selectedLogistics.includes(
+                              channel.logistics_channel_id
+                            )}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setSelectedLogistics([
+                                  ...selectedLogistics,
+                                  channel.logistics_channel_id
+                                ]);
+                              } else {
+                                setSelectedLogistics(
+                                  selectedLogistics.filter(
+                                    (id) => id !== channel.logistics_channel_id
+                                  )
+                                );
+                              }
+                            }}
+                          />
+                          <Label
+                            htmlFor={`logistic-${channel.logistics_channel_id}`}
+                            className='text-sm font-normal'
+                          >
+                            {channel.logistics_channel_name}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </ScrollArea>
+                <p className='text-muted-foreground text-xs'>
+                  Select at least one shipping channel
                 </p>
               </div>
             </div>
