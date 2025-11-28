@@ -30,6 +30,11 @@ type Product = {
   width?: number | null;
   height?: number | null;
   length?: number | null;
+  media?: {
+    id: string;
+    url: string;
+    type: string;
+  }[];
   shopeeProducts?: any[];
 };
 

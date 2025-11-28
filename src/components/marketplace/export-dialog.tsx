@@ -2,6 +2,7 @@
 
 import { exportProductToMarketplace } from '@/actions/marketplace-export';
 import { getConnectedShopeeShop, getShopeeLogistics } from '@/actions/shopee';
+import { MediaItem, MediaUploader } from '@/components/media/media-uploader';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -34,6 +35,11 @@ type Product = {
   width?: number | null;
   height?: number | null;
   length?: number | null;
+  media?: {
+    id: string;
+    url: string;
+    type: string;
+  }[];
 };
 
 type ExportDialogProps = {
@@ -70,6 +76,7 @@ export function ExportDialog({
   const [logisticsChannels, setLogisticsChannels] = useState<any[]>([]);
   const [selectedLogistics, setSelectedLogistics] = useState<number[]>([]);
   const [isFetchingLogistics, setIsFetchingLogistics] = useState(false);
+  const [media, setMedia] = useState<MediaItem[]>([]);
 
   // Initialize form with product data when dialog opens
   useEffect(() => {
@@ -84,6 +91,21 @@ export function ExportDialog({
       setWidth(product.width ? String(product.width) : '');
       setHeight(product.height ? String(product.height) : '');
       setLength(product.length ? String(product.length) : '');
+
+      // Initialize media
+      if (product.media) {
+        setMedia(
+          product.media.map((m) => ({
+            type: m.type as 'IMAGE' | 'VIDEO',
+            url: m.url,
+            thumbnailUrl: m.url,
+            publicId: m.id, // Using id as publicId for existing media
+            filename: `media-${m.id}`,
+            size: 0,
+            mimeType: m.type === 'IMAGE' ? 'image/jpeg' : 'video/mp4'
+          }))
+        );
+      }
     }
 
     // Fetch logistics if marketplace is Shopee
@@ -117,8 +139,52 @@ export function ExportDialog({
     setIsLoading(true);
 
     try {
-      // TODO: Update product data first if changed
-      // For now, we'll just use the marketplace export
+      // Upload new images to Cloudinary
+      const uploadedMedia: MediaItem[] = [];
+      for (const item of media) {
+        if (item.file) {
+          // This is a new file that needs to be uploaded
+          const formData = new FormData();
+          formData.append('file', item.file);
+
+          const response = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData
+          });
+
+          if (!response.ok) {
+            throw new Error(`Failed to upload ${item.filename}`);
+          }
+
+          const uploadedData = await response.json();
+          uploadedMedia.push(uploadedData);
+        } else {
+          // Existing media, keep as is
+          uploadedMedia.push(item);
+        }
+      }
+
+      // Update product with new media if changed
+      if (media.some((m) => m.file)) {
+        // We have new images, update the product
+        await fetch('/api/products/update-media', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            productId: product.id,
+            media: uploadedMedia.map((m, index) => ({
+              type: m.type,
+              url: m.url,
+              thumbnailUrl: m.thumbnailUrl || m.url,
+              publicId: m.publicId,
+              filename: m.filename,
+              size: m.size,
+              mimeType: m.mimeType,
+              order: index
+            }))
+          })
+        });
+      }
 
       const exportOptions =
         marketplace === 'shopee'
@@ -175,6 +241,12 @@ export function ExportDialog({
           {/* Product Details Section */}
           <div className='space-y-4'>
             <h3 className='text-sm font-semibold'>Product Details</h3>
+
+            {/* Images */}
+            <div className='space-y-2'>
+              <Label>Images</Label>
+              <MediaUploader value={media} onChange={setMedia} />
+            </div>
 
             <div className='grid gap-4'>
               <div className='space-y-2'>
