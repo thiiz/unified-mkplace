@@ -23,6 +23,13 @@ export const navItems: NavItem[] = [
     items: []
   },
   {
+    title: 'Products',
+    url: '/dashboard/products',
+    icon: 'product',
+    shortcut: ['p', 'p'],
+    items: []
+  },
+  {
     title: 'Marketplace',
     url: '/dashboard/marketplace',
     icon: 'marketplace',
