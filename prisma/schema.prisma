@@ -97,11 +97,13 @@ model ShopeeShop {
 
 model Product {
   id          String   @id @default(cuid())
+  sku         String   @unique
   name        String
   description String?
   price       Decimal  @db.Decimal(10, 2)
   stock       Int
   images      String[]
+  brand       String?  // Required by some marketplaces like Shopee
   weight      Float?
   width       Float?
   height      Float?

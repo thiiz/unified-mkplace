@@ -1,5 +1,4 @@
 import { getProducts } from '@/actions/products';
-import { PublishButton } from '@/components/products/publish-button';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -30,10 +29,10 @@ export default async function ProductsPage() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead>SKU</TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Price</TableHead>
               <TableHead>Stock</TableHead>
-              <TableHead>Status</TableHead>
               <TableHead className='text-right'>Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -47,6 +46,9 @@ export default async function ProductsPage() {
             ) : (
               products.map((product: any) => (
                 <TableRow key={product.id}>
+                  <TableCell className='font-mono text-sm'>
+                    {product.sku}
+                  </TableCell>
                   <TableCell className='font-medium'>{product.name}</TableCell>
                   <TableCell>
                     {new Intl.NumberFormat('pt-BR', {
@@ -55,18 +57,7 @@ export default async function ProductsPage() {
                     }).format(Number(product.price))}
                   </TableCell>
                   <TableCell>{product.stock}</TableCell>
-                  <TableCell>
-                    {product.shopeeProducts.length > 0 ? (
-                      <span className='text-green-600'>Synced with Shopee</span>
-                    ) : (
-                      <span className='text-gray-500'>Local only</span>
-                    )}
-                  </TableCell>
-                  <TableCell className='flex justify-end gap-2 text-right'>
-                    <PublishButton
-                      productId={product.id}
-                      isSynced={product.shopeeProducts.length > 0}
-                    />
+                  <TableCell className='text-right'>
                     <Button variant='ghost' size='sm'>
                       Edit
                     </Button>

@@ -1,6 +1,7 @@
 'use server';
 
 import prisma from '@/lib/prisma';
+import crypto from 'crypto';
 import { revalidatePath } from 'next/cache';
 
 export async function getProducts() {
@@ -15,11 +16,13 @@ export async function getProducts() {
 }
 
 export async function createProduct(data: {
+  sku: string;
   name: string;
   description?: string;
   price: number;
   stock: number;
   images: string[];
+  brand?: string;
   weight?: number;
   width?: number;
   height?: number;
@@ -37,7 +40,30 @@ export async function createProduct(data: {
   return product;
 }
 
-export async function publishProductToShopee(productId: string) {
+export async function publishProductToShopee(
+  productId: string,
+  options: {
+    categoryId: number;
+    attributes: Array<{
+      attribute_id: number;
+      attribute_value_list: Array<{
+        value_id?: number;
+        original_value_name?: string;
+        value_unit?: string;
+      }>;
+    }>;
+    logistics: Array<{
+      logistic_id: number;
+      logistic_name?: string;
+      enabled: boolean;
+      is_free?: boolean;
+      size_id?: number;
+      shipping_fee?: number;
+    }>;
+    weight?: number;
+    dimensions?: { length: number; width: number; height: number };
+  }
+) {
   const product = await prisma.product.findUnique({ where: { id: productId } });
   if (!product) throw new Error('Product not found');
 
@@ -50,49 +76,149 @@ export async function publishProductToShopee(productId: string) {
 
   // Upload images
   const imageIds: string[] = [];
+  console.log(
+    '[Shopee] Starting image upload. Total images:',
+    product.images.length
+  );
+
+  // Manual image upload to bypass SDK multipart issue
+  const partnerId = process.env.SHOPEE_PARTNER_ID!;
+  const partnerKey = process.env.SHOPEE_PARTNER_KEY!;
+  const baseUrl = (
+    process.env.SHOPEE_API_URL || 'https://partner.shopeemobile.com'
+  ).replace(/\/$/, '');
+  const path = '/api/v2/media_space/upload_image';
+
   for (const url of product.images) {
     try {
-      const response = await fetch(url);
-      const arrayBuffer = await response.arrayBuffer();
-      // const buffer = Buffer.from(arrayBuffer) // Not needed if we use Blob directly
+      console.log('[Shopee] Fetching image from:', url);
+      const imgRes = await fetch(url);
 
-      const blob = new Blob([arrayBuffer], { type: 'image/jpeg' });
-      const file = new File([blob], 'image.jpg', { type: 'image/jpeg' });
+      if (!imgRes.ok) {
+        throw new Error(`HTTP ${imgRes.status}: ${imgRes.statusText}`);
+      }
 
-      // @ts-ignore - Ignoring type check as we are guessing the signature
-      const uploadRes = await sdk.mediaSpace.uploadImage({
-        image: file
-      });
+      const arrayBuffer = await imgRes.arrayBuffer();
+      const contentType = imgRes.headers.get('content-type') || 'image/jpeg';
+      const blob = new Blob([arrayBuffer], { type: contentType });
 
-      // @ts-ignore
+      // Prepare Shopee API request
+      const timestamp = Math.floor(Date.now() / 1000);
+      const baseString = `${partnerId}${path}${timestamp}${shop.accessToken}${shop.shopId}`;
+      const sign = crypto
+        .createHmac('sha256', partnerKey)
+        .update(baseString)
+        .digest('hex');
+      const apiUrl = `${baseUrl}${path}?partner_id=${partnerId}&timestamp=${timestamp}&access_token=${shop.accessToken}&shop_id=${shop.shopId}&sign=${sign}`;
+
+      console.log('[Shopee] Uploading image manually to:', apiUrl);
+
+      const formData = new FormData();
+      formData.append('image', blob, 'image.jpg');
+
+      const uploadRes = await fetch(apiUrl, {
+        method: 'POST',
+        body: formData
+      }).then((r) => r.json());
+
+      console.log('[Shopee] Upload response:', uploadRes);
+
       if (uploadRes.image_info?.image_id) {
-        // @ts-ignore
         imageIds.push(uploadRes.image_info.image_id);
+        console.log(
+          '[Shopee] Image uploaded successfully. ID:',
+          uploadRes.image_info.image_id
+        );
+      } else {
+        console.error(
+          '[Shopee] Upload succeeded but no image_id in response:',
+          uploadRes
+        );
+        if (uploadRes.error) {
+          throw new Error(
+            `Shopee API Error: ${uploadRes.message || uploadRes.error}`
+          );
+        }
       }
     } catch (e) {
-      console.error('Failed to upload image:', url, e);
+      console.error('[Shopee] Failed to upload image:', url, e);
+      throw new Error(
+        `Failed to upload image ${url}: ${e instanceof Error ? e.message : String(e)}`
+      );
     }
   }
 
+  console.log('[Shopee] Total images uploaded:', imageIds.length);
+
+  if (imageIds.length === 0) {
+    throw new Error(
+      'No images were uploaded successfully. At least one image is required.'
+    );
+  }
+
+  // Validate and prepare logistics
+  const enabledLogistics = options.logistics.filter((l) => l.enabled);
+  console.log('[Shopee] Total logistics channels:', options.logistics.length);
+  console.log('[Shopee] Enabled logistics channels:', enabledLogistics.length);
+
+  if (enabledLogistics.length === 0) {
+    throw new Error('At least one logistics channel must be enabled.');
+  }
+
+  const logisticInfo = enabledLogistics.map((l) => ({
+    logistic_id: l.logistic_id,
+    logistic_name: l.logistic_name || '',
+    enabled: true,
+    is_free: l.is_free || false,
+    shipping_fee: l.shipping_fee,
+    size_id: l.size_id
+  }));
+
+  console.log(
+    '[Shopee] Logistics info to send:',
+    JSON.stringify(logisticInfo, null, 2)
+  );
+
   // Create product on Shopee
+  console.log('[Shopee] Creating product with:', {
+    name: product.name,
+    price: Number(product.price),
+    stock: product.stock,
+    images: imageIds.length,
+    logistics: logisticInfo.length,
+    categoryId: options.categoryId
+  });
+
   const res = await sdk.product.addItem({
     item_name: product.name,
     description: product.description || product.name,
     original_price: Number(product.price),
     seller_stock: [{ stock: product.stock }],
-    weight: product.weight || 0.1,
+    weight: options.weight || product.weight || 0.1,
     item_status: 'NORMAL',
     image: {
       image_id_list: imageIds
     },
+    // Brand - Use "No Brand" if not specified
+    brand: {
+      brand_id: 0, // 0 means "No Brand" on Shopee
+      original_brand_name: product.brand || 'No Brand'
+    },
     // Dimensions
     dimension: {
-      package_length: Math.round(product.length || 10),
-      package_width: Math.round(product.width || 10),
-      package_height: Math.round(product.height || 10)
+      package_length: Math.round(
+        options.dimensions?.length || product.length || 10
+      ),
+      package_width: Math.round(
+        options.dimensions?.width || product.width || 10
+      ),
+      package_height: Math.round(
+        options.dimensions?.height || product.height || 10
+      )
     },
-    category_id: 12345, // Placeholder
-    logistic_info: []
+    category_id: options.categoryId,
+    attribute_list: options.attributes,
+    logistic_info: logisticInfo
   });
 
   // @ts-ignore

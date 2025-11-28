@@ -21,6 +21,9 @@ import { toast } from 'sonner';
 import * as z from 'zod';
 
 const productSchema = z.object({
+  sku: z.string().min(2, {
+    message: 'SKU must be at least 2 characters.'
+  }),
   name: z.string().min(2, {
     message: 'Name must be at least 2 characters.'
   }),
@@ -32,6 +35,7 @@ const productSchema = z.object({
     message: 'Stock must be a positive integer.'
   }),
   images: z.string().optional(), // Comma separated URLs for now
+  brand: z.string().optional(),
   weight: z.coerce.number().optional(),
   width: z.coerce.number().optional(),
   height: z.coerce.number().optional(),
@@ -45,6 +49,7 @@ export default function AddProductPage() {
   const form = useForm<z.infer<typeof productSchema>>({
     resolver: zodResolver(productSchema) as any,
     defaultValues: {
+      sku: '',
       name: '',
       description: '',
       price: 0,
@@ -52,6 +57,12 @@ export default function AddProductPage() {
       images: ''
     }
   });
+
+  const generateSKU = () => {
+    const timestamp = Date.now().toString(36).toUpperCase();
+    const random = Math.random().toString(36).substring(2, 7).toUpperCase();
+    return `SKU-${timestamp}-${random}`;
+  };
 
   async function onSubmit(values: z.infer<typeof productSchema>) {
     setIsLoading(true);
@@ -81,6 +92,30 @@ export default function AddProductPage() {
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-8'>
+          <FormField
+            control={form.control}
+            name='sku'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>SKU</FormLabel>
+                <div className='flex gap-2'>
+                  <FormControl>
+                    <Input placeholder='SKU-...' {...field} />
+                  </FormControl>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    onClick={() => form.setValue('sku', generateSKU())}
+                  >
+                    Generate
+                  </Button>
+                </div>
+                <FormDescription>Unique product identifier</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
           <FormField
             control={form.control}
             name='name'
@@ -152,6 +187,23 @@ export default function AddProductPage() {
                   />
                 </FormControl>
                 <FormDescription>Comma separated URLs</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name='brand'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Brand</FormLabel>
+                <FormControl>
+                  <Input placeholder='Product brand' {...field} />
+                </FormControl>
+                <FormDescription>
+                  Required for some marketplaces
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}

@@ -1,6 +1,11 @@
 'use client';
 
+import {
+  getProductsForMarketplace,
+  MarketplaceType
+} from '@/actions/marketplace-products';
 import PageContainer from '@/components/layout/page-container';
+import { ProductsTab } from '@/components/marketplace/products-tab';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -16,6 +21,7 @@ import {
   AlertCircle,
   CheckCircle2,
   ExternalLink,
+  Package,
   Settings
 } from 'lucide-react';
 import { notFound, useSearchParams } from 'next/navigation';
@@ -73,6 +79,10 @@ export default function MarketplacePage({
     connectedAt?: string;
   }>({});
   const [isLoadingStatus, setIsLoadingStatus] = useState(true);
+  const [products, setProducts] = useState<{
+    exported: any[];
+    available: any[];
+  }>({ exported: [], available: [] });
   const searchParams = useSearchParams();
 
   // Handle OAuth callback and check connection status
@@ -139,6 +149,20 @@ export default function MarketplacePage({
 
     checkConnectionStatus();
   }, [slug, searchParams]);
+
+  // Fetch products for marketplace
+  useEffect(() => {
+    const loadProducts = async () => {
+      try {
+        const data = await getProductsForMarketplace(slug as MarketplaceType);
+        setProducts(data);
+      } catch (error) {
+        console.error('Failed to load products:', error);
+      }
+    };
+
+    loadProducts();
+  }, [slug]);
 
   // Handle connect button
   const handleConnect = () => {
@@ -221,6 +245,10 @@ export default function MarketplacePage({
         <Tabs defaultValue='overview' className='space-y-4'>
           <TabsList>
             <TabsTrigger value='overview'>Overview</TabsTrigger>
+            <TabsTrigger value='products'>
+              <Package className='mr-2 h-4 w-4' />
+              Products
+            </TabsTrigger>
             <TabsTrigger value='settings'>Settings</TabsTrigger>
             <TabsTrigger value='logs'>Logs</TabsTrigger>
           </TabsList>
@@ -339,6 +367,33 @@ export default function MarketplacePage({
                       <Button variant='destructive'>Disconnect</Button>
                     )}
                   </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value='products'>
+            <Card>
+              <CardHeader>
+                <CardTitle>Product Management</CardTitle>
+                <CardDescription>
+                  Export local products to {marketplace.name} or manage already
+                  exported items.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {!isConnected ? (
+                  <div className='flex flex-col items-center justify-center space-y-4 py-6'>
+                    <p className='text-muted-foreground'>
+                      Connect {marketplace.name} to manage products.
+                    </p>
+                  </div>
+                ) : (
+                  <ProductsTab
+                    exportedProducts={products.exported}
+                    availableProducts={products.available}
+                    marketplace={slug}
+                  />
                 )}
               </CardContent>
             </Card>
