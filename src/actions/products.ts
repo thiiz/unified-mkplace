@@ -7,7 +7,12 @@ import { revalidatePath } from 'next/cache';
 export async function getProducts() {
   return await prisma.product.findMany({
     include: {
-      shopeeProducts: true
+      shopeeProducts: true,
+      media: {
+        orderBy: {
+          order: 'asc'
+        }
+      }
     },
     orderBy: {
       createdAt: 'desc'
@@ -21,18 +26,44 @@ export async function createProduct(data: {
   description?: string;
   price: number;
   stock: number;
-  images: string[];
+  media?: Array<{
+    type: 'IMAGE' | 'VIDEO';
+    url: string;
+    thumbnailUrl?: string;
+    publicId: string;
+    filename: string;
+    size: number;
+    mimeType: string;
+  }>;
   brand?: string;
+  ean?: string;
   weight?: number;
   width?: number;
   height?: number;
   length?: number;
   categoryId?: string;
 }) {
+  const { media, ...productData } = data;
+
   const product = await prisma.product.create({
     data: {
-      ...data,
-      price: data.price // Ensure decimal handling if needed, but Prisma handles number -> Decimal
+      ...productData,
+      price: productData.price,
+      // Create media records if provided
+      media: media
+        ? {
+            create: media.map((m, index) => ({
+              type: m.type,
+              url: m.url,
+              thumbnailUrl: m.thumbnailUrl || m.url,
+              publicId: m.publicId,
+              filename: m.filename,
+              size: m.size,
+              mimeType: m.mimeType,
+              order: index
+            }))
+          }
+        : undefined
     }
   });
 
@@ -64,7 +95,10 @@ export async function publishProductToShopee(
     dimensions?: { length: number; width: number; height: number };
   }
 ) {
-  const product = await prisma.product.findUnique({ where: { id: productId } });
+  const product = await prisma.product.findUnique({
+    where: { id: productId },
+    include: { media: { orderBy: { order: 'asc' } } }
+  });
   if (!product) throw new Error('Product not found');
 
   const shop = await prisma.shopeeShop.findFirst();
@@ -74,11 +108,14 @@ export async function publishProductToShopee(
   const client = createShopeeClient();
   const sdk = await client.getSdkForShop(shop.shopId);
 
+  // Filter only image media (Shopee doesn't support video in product images)
+  const imageMedia = product.media.filter((m) => m.type === 'IMAGE');
+
   // Upload images
   const imageIds: string[] = [];
   console.log(
     '[Shopee] Starting image upload. Total images:',
-    product.images.length
+    imageMedia.length
   );
 
   // Manual image upload to bypass SDK multipart issue
@@ -89,7 +126,8 @@ export async function publishProductToShopee(
   ).replace(/\/$/, '');
   const path = '/api/v2/media_space/upload_image';
 
-  for (const url of product.images) {
+  for (const media of imageMedia) {
+    const url = media.url;
     try {
       console.log('[Shopee] Fetching image from:', url);
       const imgRes = await fetch(url);

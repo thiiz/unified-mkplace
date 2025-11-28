@@ -1,6 +1,7 @@
 'use client';
 
 import { createProduct } from '@/actions/products';
+import { MediaItem, MediaUploader } from '@/components/media/media-uploader';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -34,8 +35,11 @@ const productSchema = z.object({
   stock: z.coerce.number().int().min(0, {
     message: 'Stock must be a positive integer.'
   }),
-  images: z.string().optional(), // Comma separated URLs for now
+  media: z.array(z.any()).min(1, {
+    message: 'At least one image is required.'
+  }),
   brand: z.string().optional(),
+  ean: z.string().optional(),
   weight: z.coerce.number().optional(),
   width: z.coerce.number().optional(),
   height: z.coerce.number().optional(),
@@ -54,7 +58,7 @@ export default function AddProductPage() {
       description: '',
       price: 0,
       stock: 0,
-      images: ''
+      media: []
     }
   });
 
@@ -67,20 +71,40 @@ export default function AddProductPage() {
   async function onSubmit(values: z.infer<typeof productSchema>) {
     setIsLoading(true);
     try {
-      const images = values.images
-        ? values.images.split(',').map((s) => s.trim())
-        : [];
+      // Handle file uploads
+      const uploadedMedia = await Promise.all(
+        values.media.map(async (item: any) => {
+          if (item.file) {
+            const formData = new FormData();
+            formData.append('file', item.file);
+
+            const response = await fetch('/api/upload', {
+              method: 'POST',
+              body: formData
+            });
+
+            if (!response.ok) {
+              throw new Error(`Failed to upload ${item.filename}`);
+            }
+
+            return await response.json();
+          }
+          return item;
+        })
+      );
 
       await createProduct({
         ...values,
-        images
+        media: uploadedMedia as MediaItem[]
       });
 
       toast.success('Product created successfully');
       router.push('/dashboard/products');
     } catch (error) {
       console.error(error);
-      toast.error('Failed to create product');
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to create product'
+      );
     } finally {
       setIsLoading(false);
     }
@@ -176,17 +200,21 @@ export default function AddProductPage() {
 
           <FormField
             control={form.control}
-            name='images'
+            name='media'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Images (URLs)</FormLabel>
+                <FormLabel>Images & Videos</FormLabel>
                 <FormControl>
-                  <Input
-                    placeholder='http://example.com/image1.jpg, http://example.com/image2.jpg'
-                    {...field}
+                  <MediaUploader
+                    value={field.value}
+                    onChange={field.onChange}
+                    disabled={isLoading}
                   />
                 </FormControl>
-                <FormDescription>Comma separated URLs</FormDescription>
+                <FormDescription>
+                  Upload product images and videos. First image will be the main
+                  one.
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -203,6 +231,23 @@ export default function AddProductPage() {
                 </FormControl>
                 <FormDescription>
                   Required for some marketplaces
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name='ean'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>EAN Barcode</FormLabel>
+                <FormControl>
+                  <Input placeholder='EAN-13 barcode (13 digits)' {...field} />
+                </FormControl>
+                <FormDescription>
+                  International Article Number (EAN-13)
                 </FormDescription>
                 <FormMessage />
               </FormItem>
