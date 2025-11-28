@@ -229,6 +229,7 @@ export async function publishProductToShopee(
 
   const res = await sdk.product.addItem({
     item_name: product.name,
+    item_sku: product.sku,
     description: product.description || product.name,
     original_price: Number(product.price),
     seller_stock: [{ stock: product.stock }],
