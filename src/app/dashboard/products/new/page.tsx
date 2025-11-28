@@ -1,6 +1,7 @@
 'use client';
 
 import { createProduct } from '@/actions/products';
+import PageContainer from '@/components/layout/page-container';
 import { MediaItem, MediaUploader } from '@/components/media/media-uploader';
 import { Button } from '@/components/ui/button';
 import {
@@ -111,72 +112,44 @@ export default function AddProductPage() {
   }
 
   return (
-    <div className='container mx-auto max-w-2xl py-10'>
-      <h1 className='mb-6 text-3xl font-bold'>Add New Product</h1>
+    <PageContainer scrollable>
+      <div className='container mx-auto max-w-2xl py-10'>
+        <h1 className='mb-6 text-3xl font-bold'>Add New Product</h1>
 
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-8'>
-          <FormField
-            control={form.control}
-            name='sku'
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>SKU</FormLabel>
-                <div className='flex gap-2'>
-                  <FormControl>
-                    <Input placeholder='SKU-...' {...field} />
-                  </FormControl>
-                  <Button
-                    type='button'
-                    variant='outline'
-                    onClick={() => form.setValue('sku', generateSKU())}
-                  >
-                    Generate
-                  </Button>
-                </div>
-                <FormDescription>Unique product identifier</FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name='name'
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Name</FormLabel>
-                <FormControl>
-                  <Input placeholder='Product name' {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name='description'
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Description</FormLabel>
-                <FormControl>
-                  <Textarea placeholder='Product description' {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <div className='grid grid-cols-2 gap-4'>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-8'>
             <FormField
               control={form.control}
-              name='price'
+              name='sku'
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Price</FormLabel>
+                  <FormLabel>SKU</FormLabel>
+                  <div className='flex gap-2'>
+                    <FormControl>
+                      <Input placeholder='SKU-...' {...field} />
+                    </FormControl>
+                    <Button
+                      type='button'
+                      variant='outline'
+                      onClick={() => form.setValue('sku', generateSKU())}
+                    >
+                      Generate
+                    </Button>
+                  </div>
+                  <FormDescription>Unique product identifier</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name='name'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Name</FormLabel>
                   <FormControl>
-                    <Input type='number' step='0.01' {...field} />
+                    <Input placeholder='Product name' {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -185,135 +158,168 @@ export default function AddProductPage() {
 
             <FormField
               control={form.control}
-              name='stock'
+              name='description'
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Stock</FormLabel>
+                  <FormLabel>Description</FormLabel>
                   <FormControl>
-                    <Input type='number' {...field} />
+                    <Textarea placeholder='Product description' {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-          </div>
 
-          <FormField
-            control={form.control}
-            name='media'
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Images & Videos</FormLabel>
-                <FormControl>
-                  <MediaUploader
-                    value={field.value}
-                    onChange={field.onChange}
-                    disabled={isLoading}
-                  />
-                </FormControl>
-                <FormDescription>
-                  Upload product images and videos. First image will be the main
-                  one.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+            <div className='grid grid-cols-2 gap-4'>
+              <FormField
+                control={form.control}
+                name='price'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Price</FormLabel>
+                    <FormControl>
+                      <Input type='number' step='0.01' {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-          <FormField
-            control={form.control}
-            name='brand'
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Brand</FormLabel>
-                <FormControl>
-                  <Input placeholder='Product brand' {...field} />
-                </FormControl>
-                <FormDescription>
-                  Required for some marketplaces
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+              <FormField
+                control={form.control}
+                name='stock'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Stock</FormLabel>
+                    <FormControl>
+                      <Input type='number' {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
-          <FormField
-            control={form.control}
-            name='ean'
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>EAN Barcode</FormLabel>
-                <FormControl>
-                  <Input placeholder='EAN-13 barcode (13 digits)' {...field} />
-                </FormControl>
-                <FormDescription>
-                  International Article Number (EAN-13)
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <div className='grid grid-cols-4 gap-4'>
             <FormField
               control={form.control}
-              name='weight'
+              name='media'
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Weight (kg)</FormLabel>
+                  <FormLabel>Images & Videos</FormLabel>
                   <FormControl>
-                    <Input type='number' step='0.01' {...field} />
+                    <MediaUploader
+                      value={field.value}
+                      onChange={field.onChange}
+                      disabled={isLoading}
+                    />
                   </FormControl>
+                  <FormDescription>
+                    Upload product images and videos. First image will be the
+                    main one.
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name='length'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Length (cm)</FormLabel>
-                  <FormControl>
-                    <Input type='number' step='1' {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name='width'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Width (cm)</FormLabel>
-                  <FormControl>
-                    <Input type='number' step='1' {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name='height'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Height (cm)</FormLabel>
-                  <FormControl>
-                    <Input type='number' step='1' {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
 
-          <Button type='submit' disabled={isLoading}>
-            {isLoading ? 'Creating...' : 'Create Product'}
-          </Button>
-        </form>
-      </Form>
-    </div>
+            <FormField
+              control={form.control}
+              name='brand'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Brand</FormLabel>
+                  <FormControl>
+                    <Input placeholder='Product brand' {...field} />
+                  </FormControl>
+                  <FormDescription>
+                    Required for some marketplaces
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name='ean'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>EAN Barcode</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder='EAN-13 barcode (13 digits)'
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    International Article Number (EAN-13)
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className='grid grid-cols-4 gap-4'>
+              <FormField
+                control={form.control}
+                name='weight'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Weight (kg)</FormLabel>
+                    <FormControl>
+                      <Input type='number' step='0.01' {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name='length'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Length (cm)</FormLabel>
+                    <FormControl>
+                      <Input type='number' step='1' {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name='width'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Width (cm)</FormLabel>
+                    <FormControl>
+                      <Input type='number' step='1' {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name='height'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Height (cm)</FormLabel>
+                    <FormControl>
+                      <Input type='number' step='1' {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <Button type='submit' disabled={isLoading}>
+              {isLoading ? 'Creating...' : 'Create Product'}
+            </Button>
+          </form>
+        </Form>
+      </div>
+    </PageContainer>
   );
 }
