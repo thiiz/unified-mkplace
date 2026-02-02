@@ -62,7 +62,7 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "dotenv": "^17.2.3",
-    "eslint": "8.48.0",
+    "eslint": "9.26.0",
     "eslint-config-next": "15.1.0",
     "input-otp": "^1.4.2",
     "kbar": "^0.1.0-beta.45",
