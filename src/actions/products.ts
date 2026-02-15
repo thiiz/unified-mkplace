@@ -71,6 +71,102 @@ export async function createProduct(data: {
   return product;
 }
 
+export async function getProductById(id: string) {
+  return await prisma.product.findUnique({
+    where: { id },
+    include: {
+      media: {
+        orderBy: {
+          order: 'asc'
+        }
+      },
+      shopeeProducts: true
+    }
+  });
+}
+
+export async function updateProduct(
+  id: string,
+  data: {
+    sku?: string;
+    name?: string;
+    description?: string;
+    price?: number;
+    stock?: number;
+    media?: Array<{
+      type: 'IMAGE' | 'VIDEO';
+      url: string;
+      thumbnailUrl?: string;
+      publicId: string;
+      filename: string;
+      size: number;
+      mimeType: string;
+    }>;
+    brand?: string;
+    ean?: string;
+    weight?: number;
+    width?: number;
+    height?: number;
+    length?: number;
+    categoryId?: string;
+  }
+) {
+  const { media, ...productData } = data;
+
+  // If media is provided, delete old media and create new ones
+  if (media) {
+    await prisma.productMedia.deleteMany({
+      where: { productId: id }
+    });
+  }
+
+  const product = await prisma.product.update({
+    where: { id },
+    data: {
+      ...productData,
+      // Create new media records if provided
+      media: media
+        ? {
+            create: media.map((m, index) => ({
+              type: m.type,
+              url: m.url,
+              thumbnailUrl: m.thumbnailUrl || m.url,
+              publicId: m.publicId,
+              filename: m.filename,
+              size: m.size,
+              mimeType: m.mimeType,
+              order: index
+            }))
+          }
+        : undefined
+    }
+  });
+
+  revalidatePath('/dashboard/products');
+  revalidatePath(`/dashboard/products/${id}`);
+  return product;
+}
+
+export async function deleteProduct(id: string) {
+  // First delete all related media
+  await prisma.productMedia.deleteMany({
+    where: { productId: id }
+  });
+
+  // Delete related Shopee products
+  await prisma.shopeeProduct.deleteMany({
+    where: { productId: id }
+  });
+
+  // Finally delete the product
+  const product = await prisma.product.delete({
+    where: { id }
+  });
+
+  revalidatePath('/dashboard/products');
+  return product;
+}
+
 export async function publishProductToShopee(
   productId: string,
   options: {
