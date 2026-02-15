@@ -3,9 +3,10 @@
 import prisma from '@/lib/prisma';
 import crypto from 'crypto';
 import { revalidatePath } from 'next/cache';
+import { serialize } from '@/lib/serialization';
 
 export async function getProducts() {
-  return await prisma.product.findMany({
+  const products = await prisma.product.findMany({
     include: {
       shopeeProducts: true,
       media: {
@@ -18,6 +19,7 @@ export async function getProducts() {
       createdAt: 'desc'
     }
   });
+  return serialize(products);
 }
 
 export async function createProduct(data: {
@@ -72,7 +74,7 @@ export async function createProduct(data: {
 }
 
 export async function getProductById(id: string) {
-  return await prisma.product.findUnique({
+  const product = await prisma.product.findUnique({
     where: { id },
     include: {
       media: {
@@ -83,6 +85,7 @@ export async function getProductById(id: string) {
       shopeeProducts: true
     }
   });
+  return product ? serialize(product) : null;
 }
 
 export async function updateProduct(

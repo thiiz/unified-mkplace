@@ -17,7 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, use } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import * as z from 'zod';
@@ -50,8 +50,9 @@ const productSchema = z.object({
 export default function EditProductPage({
   params
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = use(params);
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingProduct, setIsLoadingProduct] = useState(true);
@@ -72,7 +73,7 @@ export default function EditProductPage({
     // Load product data
     async function loadProduct() {
       try {
-        const product = await getProductById(params.id);
+        const product = await getProductById(id);
         if (!product) {
           toast.error('Product not found');
           router.push('/dashboard/products');
@@ -112,7 +113,7 @@ export default function EditProductPage({
     }
 
     loadProduct();
-  }, [params.id, form, router]);
+  }, [id, form, router]);
 
   async function onSubmit(values: z.infer<typeof productSchema>) {
     setIsLoading(true);
@@ -139,7 +140,7 @@ export default function EditProductPage({
         })
       );
 
-      await updateProduct(params.id, {
+      await updateProduct(id, {
         ...values,
         media: uploadedMedia as MediaItem[]
       });

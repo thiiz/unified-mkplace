@@ -15,14 +15,17 @@ import { Edit, Plus, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { Serialized } from '@/lib/serialization';
+import { Prisma } from '@prisma/client';
 
-interface Product {
-  id: string;
-  sku: string;
-  name: string;
-  price: any;
-  stock: number;
-}
+type ProductWithRelations = Prisma.ProductGetPayload<{
+  include: {
+    shopeeProducts: true;
+    media: true;
+  };
+}>;
+
+type Product = Serialized<ProductWithRelations>;
 
 export default function ProductsPage() {
   const router = useRouter();
@@ -45,7 +48,7 @@ export default function ProductsPage() {
   async function loadProducts() {
     try {
       const data = await getProducts();
-      setProducts(data as any);
+      setProducts(data);
     } catch (error) {
       console.error('Failed to load products:', error);
     } finally {
@@ -111,7 +114,7 @@ export default function ProductsPage() {
                     {new Intl.NumberFormat('pt-BR', {
                       style: 'currency',
                       currency: 'BRL'
-                    }).format(Number(product.price))}
+                    }).format(product.price)}
                   </TableCell>
                   <TableCell>{product.stock}</TableCell>
                   <TableCell className='text-right'>
